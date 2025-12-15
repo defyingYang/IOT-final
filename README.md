@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 智慧戒斷盒 - Flask 版本
 
 一個幫助你遠離手機干擾、專注工作的智慧鎖定系統。
@@ -39,3 +40,7 @@ http://localhost:5000
 - `templates/` - HTML 模板 (Jinja2)
 - `static/css/` - 樣式表
 - `static/js/` - JavaScript 腳本
+=======
+# IOT-final
+IoT final project "Phone Addiction  Free Box"
+>>>>>>> 7745b0a93e702187f6abce193609b808cd5bc52e
