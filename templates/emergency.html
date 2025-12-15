@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}緊急解鎖 - 智慧戒斷盒{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="icon-container emergency">
+        <i data-lucide="alert-circle" class="icon-large"></i>
+    </div>
+    <h1 class="title">緊急解鎖申請</h1>
+    <p class="subtitle">AI 智慧判斷緊急狀況</p>
+</header>
+
+<nav class="nav">
+    <a href="/" class="nav-btn">
+        <i data-lucide="lock"></i>
+        <span>鎖定控制</span>
+    </a>
+    <a href="/dashboard" class="nav-btn">
+        <i data-lucide="bar-chart-3"></i>
+        <span>成果儀表板</span>
+    </a>
+    <a href="/emergency" class="nav-btn nav-btn-active">
+        <i data-lucide="alert-circle"></i>
+        <span>緊急解鎖</span>
+    </a>
+</nav>
+
+<!-- Warning Alert -->
+<div class="alert alert-warning">
+    <i data-lucide="alert-triangle"></i>
+    <p>此功能僅供真正緊急狀況使用。濫用將被記錄並影響你的成就統計。</p>
+</div>
+
+<!-- Main Form -->
+<div class="card">
+    <div class="card-header center">
+        <div class="emergency-icon-large">
+            <i data-lucide="alert-circle"></i>
+        </div>
+        <h2 class="card-title">說明你的緊急狀況</h2>
+        <p class="card-description">AI 系統將分析你的原因並決定是否允許提前解鎖</p>
+    </div>
+    <div class="card-content">
+        <div id="formView">
+            <div class="form-group">
+                <label>請詳細說明緊急情況 *</label>
+                <textarea id="reasonInput" rows="6" placeholder="例如：家人突然生病需要聯絡醫院..."></textarea>
+                <p class="form-hint">系統會使用自然語言處理技術判斷緊急程度</p>
+            </div>
+            
+            <button id="submitBtn" class="emergency-btn">
+                <i data-lucide="alert-circle"></i>
+                <span>提交緊急解鎖申請</span>
+            </button>
+        </div>
+
+        <div id="resultView" class="hidden">
+            <div class="result-content">
+                <div id="resultIcon" class="result-icon"></div>
+                <h3 id="resultTitle" class="result-title"></h3>
+                <p id="resultMessage" class="result-message"></p>
+                <div class="result-info">
+                    <p id="resultInfo"></p>
+                </div>
+                <button id="backBtn" class="back-btn">返回主頁</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Cards -->
+<div class="info-grid">
+    <div class="info-card">
+        <h3 class="info-title">
+            <i data-lucide="check-circle" class="text-primary"></i>
+            合理的緊急狀況
+        </h3>
+        <ul class="info-list">
+            <li>• 醫療緊急事件</li>
+            <li>• 家人突發狀況</li>
+            <li>• 重要工作聯絡</li>
+            <li>• 安全相關問題</li>
+        </ul>
+    </div>
+    
+    <div class="info-card">
+        <h3 class="info-title">
+            <i data-lucide="alert-circle" class="text-destructive"></i>
+            不合理的理由
+        </h3>
+        <ul class="info-list">
+            <li>• 感到無聊</li>
+            <li>• 想查看社群媒體</li>
+            <li>• 單純想玩遊戲</li>
+            <li>• 沒有具體原因</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const reasonInput = document.getElementById('reasonInput');
+const submitBtn = document.getElementById('submitBtn');
+const formView = document.getElementById('formView');
+const resultView = document.getElementById('resultView');
+const resultIcon = document.getElementById('resultIcon');
+const resultTitle = document.getElementById('resultTitle');
+const resultMessage = document.getElementById('resultMessage');
+const resultInfo = document.getElementById('resultInfo');
+const backBtn = document.getElementById('backBtn');
+
+submitBtn.addEventListener('click', async () => {
+    const reason = reasonInput.value.trim();
+    if (!reason) return;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="spinner"></div> AI 分析中...';
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const response = await fetch('/api/emergency-unlock', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({reason})
+    });
+    
+    const data = await response.json();
+    
+    formView.classList.add('hidden');
+    resultView.classList.remove('hidden');
+    
+    if (data.approved) {
+        resultIcon.innerHTML = '<i data-lucide="check-circle" class="icon-success"></i>';
+        resultTitle.textContent = '解鎖已批准';
+        resultMessage.textContent = '系統判定為合理的緊急狀況，已為你解鎖';
+        resultInfo.textContent = '此次提前解鎖將被記錄在你的使用歷史中';
+    } else {
+        resultIcon.innerHTML = '<i data-lucide="alert-circle" class="icon-error"></i>';
+        resultTitle.textContent = '解鎖被拒絕';
+        resultMessage.textContent = '系統判定不符合緊急狀況標準';
+        resultInfo.innerHTML = '<p class="font-medium mb-2">建議：</p><ul class="list-disc list-inside space-y-1"><li>確保描述了真正的緊急狀況</li><li>說明為何需要立即取回手機</li><li>提供更多具體細節</li></ul>';
+    }
+    
+    lucide.createIcons();
+});
+
+backBtn.addEventListener('click', () => {
+    window.location.href = '/';
+});
+</script>
+{% endblock %}

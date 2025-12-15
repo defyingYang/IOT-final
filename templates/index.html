@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}智慧戒斷盒 - 主頁{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="header">
+    <div class="icon-container">
+        <i data-lucide="lock" class="icon-large"></i>
+    </div>
+    <h1 class="title">智慧戒斷盒</h1>
+    <p class="subtitle">讓專注成為習慣，遠離手機干擾</p>
+</header>
+
+<!-- Navigation -->
+<nav class="nav">
+    <a href="/" class="nav-btn nav-btn-active">
+        <i data-lucide="lock"></i>
+        <span>鎖定控制</span>
+    </a>
+    <a href="/dashboard" class="nav-btn">
+        <i data-lucide="bar-chart-3"></i>
+        <span>成果儀表板</span>
+    </a>
+    <a href="/emergency" class="nav-btn">
+        <i data-lucide="alert-circle"></i>
+        <span>緊急解鎖</span>
+    </a>
+</nav>
+
+<!-- Status Overview -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-title">本週總時數</div>
+        <div class="stat-value">{{ stats.weekly_hours }} <span class="stat-unit">小時</span></div>
+        <div class="stat-trend positive">{{ stats.weekly_trend }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">成功次數</div>
+        <div class="stat-value">{{ stats.success_count }} <span class="stat-unit">次</span></div>
+        <div class="stat-trend positive">{{ stats.success_trend }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">平均時長</div>
+        <div class="stat-value">{{ stats.avg_duration }} <span class="stat-unit">分鐘</span></div>
+        <div class="stat-trend positive">{{ stats.avg_trend }}</div>
+    </div>
+</div>
+
+<!-- Main Control -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">設定鎖定時間</h2>
+        <p class="card-description">選擇專注時長並開始你的任務</p>
+    </div>
+    <div class="card-content">
+        <div class="timer-display" id="timerDisplay">30:00</div>
+        
+        <div class="time-presets">
+            <button class="time-btn" data-minutes="15">15分鐘</button>
+            <button class="time-btn active" data-minutes="30">30分鐘</button>
+            <button class="time-btn" data-minutes="60">1小時</button>
+            <button class="time-btn" data-minutes="120">2小時</button>
+        </div>
+
+        <div class="slider-container">
+            <input type="range" id="timeSlider" min="5" max="180" value="30" step="5" class="slider">
+            <div class="slider-labels">
+                <span>5分</span>
+                <span>180分</span>
+            </div>
+        </div>
+
+        <button id="lockBtn" class="lock-btn">
+            <i data-lucide="lock"></i>
+            <span>開始鎖定</span>
+        </button>
+
+        <div id="lockStatus" class="lock-status hidden">
+            <div class="status-icon">
+                <i data-lucide="lock" class="icon-pulse"></i>
+            </div>
+            <div class="status-text">手機已安全鎖定</div>
+            <div class="countdown" id="countdown">29:59</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedMinutes = 30;
+let isLocked = false;
+let countdownInterval = null;
+
+const timeSlider = document.getElementById('timeSlider');
+const timerDisplay = document.getElementById('timerDisplay');
+const lockBtn = document.getElementById('lockBtn');
+const lockStatus = document.getElementById('lockStatus');
+const countdown = document.getElementById('countdown');
+const timeButtons = document.querySelectorAll('.time-btn');
+
+function updateDisplay(minutes) {
+    selectedMinutes = minutes;
+    timerDisplay.textContent = `${minutes}:00`;
+    timeSlider.value = minutes;
+}
+
+timeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        timeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateDisplay(parseInt(btn.dataset.minutes));
+    });
+});
+
+timeSlider.addEventListener('input', (e) => {
+    updateDisplay(parseInt(e.target.value));
+    timeButtons.forEach(b => b.classList.remove('active'));
+});
+
+lockBtn.addEventListener('click', async () => {
+    if (isLocked) return;
+    
+    const response = await fetch('/api/lock', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({duration: selectedMinutes})
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        isLocked = true;
+        lockBtn.style.display = 'none';
+        lockStatus.classList.remove('hidden');
+        
+        let timeLeft = selectedMinutes * 60;
+        countdownInterval = setInterval(() => {
+            timeLeft--;
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            countdown.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdownInterval);
+                isLocked = false;
+                lockBtn.style.display = 'flex';
+                lockStatus.classList.add('hidden');
+            }
+        }, 1000);
+    }
+});
+</script>
+{% endblock %}

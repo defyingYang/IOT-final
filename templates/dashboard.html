@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}成果儀表板 - 智慧戒斷盒{% endblock %}
+
+{% block content %}
+<header class="header">
+    <div class="icon-container">
+        <i data-lucide="bar-chart-3" class="icon-large"></i>
+    </div>
+    <h1 class="title">成果儀表板</h1>
+    <p class="subtitle">追蹤你的專注成就</p>
+</header>
+
+<nav class="nav">
+    <a href="/" class="nav-btn">
+        <i data-lucide="lock"></i>
+        <span>鎖定控制</span>
+    </a>
+    <a href="/dashboard" class="nav-btn nav-btn-active">
+        <i data-lucide="bar-chart-3"></i>
+        <span>成果儀表板</span>
+    </a>
+    <a href="/emergency" class="nav-btn">
+        <i data-lucide="alert-circle"></i>
+        <span>緊急解鎖</span>
+    </a>
+</nav>
+
+<!-- Achievement Cards -->
+<div class="achievement-grid">
+    <div class="achievement-card">
+        <div class="achievement-header">
+            <div class="achievement-icon">
+                <i data-lucide="trophy"></i>
+            </div>
+            <span class="achievement-emoji"></span>
+        </div>
+        <div class="achievement-value">{{ achievements.success_rate }}%</div>
+        <div class="achievement-label">成功率</div>
+    </div>
+    
+    <div class="achievement-card">
+        <div class="achievement-header">
+            <div class="achievement-icon">
+                <i data-lucide="target"></i>
+            </div>
+            <span class="achievement-emoji"></span>
+        </div>
+        <div class="achievement-value">{{ achievements.total_sessions }}</div>
+        <div class="achievement-label">總完成次數</div>
+    </div>
+    
+    <div class="achievement-card">
+        <div class="achievement-header">
+            <div class="achievement-icon">
+                <i data-lucide="clock"></i>
+            </div>
+            <span class="achievement-emoji"></span>
+        </div>
+        <div class="achievement-value">{{ achievements.total_hours }}</div>
+        <div class="achievement-label">總專注時數</div>
+    </div>
+    
+    <div class="achievement-card">
+        <div class="achievement-header">
+            <div class="achievement-icon">
+                <i data-lucide="calendar"></i>
+            </div>
+            <span class="achievement-emoji"></span>
+        </div>
+        <div class="achievement-value">{{ achievements.streak_days }}</div>
+        <div class="achievement-label">連續使用天數</div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">每週專注時數</h2>
+        <p class="card-description">過去 7 天的使用統計</p>
+    </div>
+    <div class="card-content">
+        <canvas id="weeklyChart"></canvas>
+    </div>
+</div>
+
+<!-- Recent Sessions -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">最近的專注記錄</h2>
+        <p class="card-description">最新 5 次鎖定任務</p>
+    </div>
+    <div class="card-content">
+        <div class="sessions-list">
+            {% for session in sessions %}
+            <div class="session-item">
+                <div class="session-info">
+                    <div class="session-dot {{ 'completed' if session.status == 'completed' else 'emergency' }}"></div>
+                    <div>
+                        <div class="session-duration">{{ session.duration }}</div>
+                        <div class="session-date">{{ session.date }}</div>
+                    </div>
+                </div>
+                <div class="session-badge {{ 'completed' if session.status == 'completed' else 'emergency' }}">
+                    {{ '已完成' if session.status == 'completed' else '提前解鎖' }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const weeklyData = {{ weekly_stats | tojson }};
+const ctx = document.getElementById('weeklyChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: weeklyData.map(d => d.day),
+        datasets: [{
+            label: '專注時數',
+            data: weeklyData.map(d => d.hours),
+            backgroundColor: '#3b82f6',
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {display: false}
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: value => value + '小時'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
